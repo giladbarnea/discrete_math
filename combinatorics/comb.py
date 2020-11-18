@@ -28,7 +28,11 @@ def fac_str(start, stop=1):
     if length <= 6:
         string = f"{start}"
         for n in reversed(range(stop, start)):
+            if n == 0:
+                n = 1
             string += f"·{n}"
+        if string == "0":
+            return 1
         return string
     if start - 1 > stop:
         return f"{start}·{start-1}·…·{stop}"
@@ -36,18 +40,18 @@ def fac_str(start, stop=1):
         return f"{start}·…·{stop}"
     
 def fac(start, stop=1):
-    mult = start
+    
+    mult = start if start else 1
     for n in reversed(range(stop, start)):
+        if n == 0:
+            n = 1
         mult = mult * n
     return mult
 
 def bold_num(s):
     bold = re.sub(r"\d+\b", lambda match: f"\x1b[1m{match.group()}\x1b[0m", s)
     return bold
-#     try:
-#         
-#     except TypeError:
-#         return s
+
 
 
 def dim_ver(s):
@@ -56,13 +60,20 @@ def dim_ver(s):
         return dim
     else:
         return s
+
     
+    
+###############
+# ORDER MATTERS
+###############
+
 def P(n, k, *, explain=True, example=False, identities=False):
     if isinstance(n, int):
         rv = len(list(permutations(range(n), k)))
         if explain:
             print(
-                f"P({n},{k}) = {rv} ways to organize {k} letters from a collection of {n} letters",
+                f"P({n},{k})",
+                f"{rv} ways to organize {k} letters from a collection of {n} letters",
                 "• Order matters, so 'BA' and 'AB' are both counted.",
                 "• No repetitions allowed",
                 sep="\n\t",
@@ -72,6 +83,7 @@ def P(n, k, *, explain=True, example=False, identities=False):
             print(P_id(n, k, "II"))
             print(P_id(n, k, "III"))
         if example:
+            print(f"\n\x1b[1mP Examples\x1b[0m")
             letters = ascii_uppercase[:n]
             print(f"P({n},{k}) from {letters}:")
             [print(f"{i}:\t", *perm, sep="") for i, perm in enumerate(permutations(letters, k), 1)]
@@ -81,10 +93,9 @@ def P(n, k, *, explain=True, example=False, identities=False):
     return rv
 
 def P_id(n, k=1, v=None):
-    _k = n - k
     v1 = f"P({n},{k}) vI  = {fac_str(n, n-k+1)}"
     v2 = f"P({n},{k}) vII = ({fac_str(n)})/({fac_str(n-k)}) = {fac(n)}/{fac(n-k)}"
-    v3 = f"P({n},{k}) vIII = P(k)I · C(n,k) = k!C(n,k)"
+    v3 = f"P({n},{k}) vIII = ({fac_str(k)}) · ( ({fac_str(n, n-k+1)})/({fac_str(k)}) ) = {fac(k)} · {fac(n, n-k+1)}/{fac(k)}"
     if "III" in v:
         return v3
     elif "II" in v:
@@ -107,17 +118,88 @@ def P_spam(*, byres=False):
     if byres:
         for res, how in sorted(results.items()):
             print(f"{res}:\t{', '.join(how)}")
+     
+
+def Pnk(n, *nks):
+    if isinstance(n, int):
+        denominator = 1
+        for nk in nks:
+            denominator = denominator*fac(nk)
+        rv = fac(n)/denominator
+    else:
+        raise NotImplementedError
+    
+    return int(rv)
+    
+
+def Pnk_spam(*, byres=False, ofnum=None):
+    results = defaultdict(list)
+    for n in range(2, 11):
+        for n1 in range(1, 11):
+            if n1>n//2:
+                continue
+            n2=n-n1
+            rv = Pnk(n, n1, n2)
+            how = f"P({n}; {n1},{n2})"
+            if byres or (ofnum is not None):
+                results[rv].append(how)
+            else:
+                print(f"{how}: {rv}")
+        print()       
         
+    if ofnum is not None:
+        print(f"{ofnum}:\t{', '.join(results[ofnum])}")
+    
+    elif byres:
+        for res, how in sorted(results.items()):
+            print(f"{res}:\t{', '.join(how)}")
+            
+            
+def nk(n,k, *, example=False):
+    if isinstance(n, int):
+        rv = n**k
+        if example:
+            print("\n\x1b[1mnk Examples\x1b[0m")
+            letters = ascii_uppercase[:n]
+            print(f"{n}^{k} from {letters}:")
+            
+            
+            perms = sorted(set(permutations(letters, k)).union(comb_w_rep(letters, k)))
+            [print(f"{i}:\t", *perm, sep="") for i, perm in enumerate(perms, 1)]
+            
+#             for i in range(n):
+#                 # print "AA", "BB"... which `permutations` doesn't yield
+#                 real_i = len(perms)+i+1
+#                 print(f"{real_i}:\t", letters[i]*k, sep="")
+            
+        print()
+    else:
+        raise NotImplementedError
+    
+    return rv
+
+def nk_spam(n,k):
+    pass
+
+
+#######################
+# ORDER DOES NOT MATTER
+#######################
+
 def C(n, k, *, explain=True, example=False, identities=False):
     if isinstance(n, int):
         rv = len(list(combinations(range(n), k)))
         if explain:
             kia = ascii_uppercase[:k]
+            if kia:
+                orderstr = f"• Order doesn't matter, so '{kia}' and '{kia[1:]}{kia[0]}' count as one thing"
+            else:
+                orderstr=f"• Order doesn't matter"
             print(
                 f"C({n},{k}) vI",
                 f"{rv} ways to select {k} different letters from {n} letters",
                 f"set {set(range(1, n+1))} has {rv} subsets whose size={k}",
-                f"• Order doesn't matter, so '{kia}' and '{kia[1:]}{kia[0]}' count as one thing",
+                orderstr,
                 f"• No repetitions allowed",
                 sep="\n\t",
             )
@@ -169,66 +251,10 @@ def C_id(n, k, v):
         return v1
     
     
-def nk(n,k, *, example=False):
-    if isinstance(n, int):
-        rv = n**k
-        if example:
-            print("\n\x1b[1mnk Examples\x1b[0m")
-            letters = ascii_uppercase[:n]
-            print(f"{n}^{k} from {letters}:")
-            
-            
-            perms = sorted(set(permutations(letters, k)).union(comb_w_rep(letters, k)))
-            [print(f"{i}:\t", *perm, sep="") for i, perm in enumerate(perms, 1)]
-            
-#             for i in range(n):
-#                 # print "AA", "BB"... which `permutations` doesn't yield
-#                 real_i = len(perms)+i+1
-#                 print(f"{real_i}:\t", letters[i]*k, sep="")
-            
-        print()
-    else:
-        raise NotImplementedError
-    
-    return rv
-
-def nk_spam(n,k):
-    pass
 
 
-def Pnk(n, *nks):
-    if isinstance(n, int):
-        denominator = 1
-        for nk in nks:
-            denominator = denominator*fac(nk)
-        rv = fac(n)/denominator
-    else:
-        raise NotImplementedError
-    
-    return int(rv)
-    
 
-def Pnk_spam(*, byres=False, ofnum=None):
-    results = defaultdict(list)
-    for n in range(2, 11):
-        for n1 in range(1, 11):
-            if n1>n//2:
-                continue
-            n2=n-n1
-            rv = Pnk(n, n1, n2)
-            how = f"P({n}; {n1},{n2})"
-            if byres or (ofnum is not None):
-                results[rv].append(how)
-            else:
-                print(f"{how}: {rv}")
-        print()       
-        
-    if ofnum is not None:
-        print(f"{ofnum}:\t{', '.join(results[ofnum])}")
-    
-    elif byres:
-        for res, how in sorted(results.items()):
-            print(f"{res}:\t{', '.join(how)}")
+
     
         
         
