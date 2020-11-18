@@ -1,11 +1,13 @@
 print('combinatorics/comb.py')
+from typing import overload
 from itertools import permutations, combinations, combinations_with_replacement as comb_w_rep, product
 from string import ascii_uppercase, ascii_lowercase
 from pprint import pprint
 import re
 from copy import deepcopy
+from collections import defaultdict
 
-# _print = deepcopy(__builtins__.__dict__.get("print"))
+
 _print = deepcopy(print)
 def newprint(*args, **kwargs):
     if len(args)>1:
@@ -61,13 +63,14 @@ def P(n, k, *, explain=True, example=False, identities=False):
         if explain:
             print(
                 f"P({n},{k}) = {rv} ways to organize {k} letters from a collection of {n} letters",
-                "Order matters, so 'BA' and 'AB' are both counted.",
-                "No repetitions allowed",
+                "• Order matters, so 'BA' and 'AB' are both counted.",
+                "• No repetitions allowed",
                 sep="\n\t",
             )
         if identities:
             print(P_id(n, k, "I"))
             print(P_id(n, k, "II"))
+            print(P_id(n, k, "III"))
         if example:
             letters = ascii_uppercase[:n]
             print(f"P({n},{k}) from {letters}:")
@@ -89,14 +92,21 @@ def P_id(n, k=1, v=None):
     else:
         return v1
 
-def P_spam(start=1,stop=11):
-    for i in range(start, stop):
-        for j in range(start, stop):
-            if j > i:
+def P_spam(*, byres=False):
+    results = defaultdict(list)
+    for n in range(1, 10):
+        for k in range(1, 10):
+            if k > n:
                 continue
-            print(f"P({i},{j}): {P(i,j,example=False,explain=False,identities=False)}")
-        print()
+            rv = P(n,k,example=False,explain=False,identities=False)
+            if byres:
+                results[rv].append(f"P({n},{k})")
+            else:
+                print(f"P({n},{k}): {rv}")
         
+    if byres:
+        for res, how in sorted(results.items()):
+            print(f"{res}:\t{', '.join(how)}")
         
 def C(n, k, *, explain=True, example=False, identities=False):
     if isinstance(n, int):
@@ -132,15 +142,33 @@ def C(n, k, *, explain=True, example=False, identities=False):
         rv = list(combinations(n, k))
     return rv
 
-def C_spam():
-    for i in range(1, 11):
-        for j in range(1, 11):
-            if j > i:
+def C_spam(*, byres=False):
+    results = defaultdict(list)
+    for n in range(1, 11):
+        for k in range(1, 11):
+            if k > n:
                 continue
-            print(f"C({i},{j}): {C(i,j,example=False,explain=False,identities=False)}")
-        print()
+            rv = C(n,k,example=False,explain=False,identities=False)
+            if byres:
+                results[rv].append(f"C({n},{k})")
+            else:
+                print(f"C({n},{k}): {rv}")
+    if byres:
+        for res, how in sorted(results.items()):
+            print(f"{res}:\t{', '.join(how)}")
         
-        
+def C_id(n, k, v):
+    _k = n - k
+    v1 = f"C({n},{k}) vI  = P({n},{k})/P({k}) = ({fac_str(n, n-k+1)})/({fac_str(k)}) = {fac(n, n-k+1)}/{fac(k)}"
+    
+    v2 = f"C({n},{_k}) vII = P({n},{_k})/P({_k}) = ({fac_str(n, n-_k+1)})/({fac_str(_k)}) = {fac(n, n-_k+1)}/{fac(_k)}"
+    
+    if "II" in v:
+        return v2
+    else:
+        return v1
+    
+    
 def nk(n,k, *, example=False):
     if isinstance(n, int):
         rv = n**k
@@ -164,19 +192,46 @@ def nk(n,k, *, example=False):
     
     return rv
 
+def nk_spam(n,k):
+    pass
 
 
-def C_id(n, k, v):
-    _k = n - k
-    v1 = f"C({n},{k}) vI  = P({n},{k})/P({k}) = ({fac_str(n, n-k+1)})/({fac_str(k)}) = {fac(n, n-k+1)}/{fac(k)}"
-    #     v1 = f"C({n},{k}) vI  = P({n},{k})/P({k}) = {P_id(n, n-k+1, 'I')}/{fac_str(k)} = {fac(n, n-k+1)}/{fac(k)}"
-    v2 = f"C({n},{_k}) vII = P({n},{_k})/P({_k}) = ({fac_str(n, n-_k+1)})/({fac_str(_k)}) = {fac(n, n-_k+1)}/{fac(_k)}"
-    #     v2 = f"C({n},{_k}) vII = P({n},{_k})/P({_k}) = {P_id(n, n-_k+1, 'I')}/{fac_str(_k)} = {fac(n, n-_k+1)}/{fac(_k)}"
-    if "II" in v:
-        return v2
+def Pnk(n, *nks):
+    if isinstance(n, int):
+        denominator = 1
+        for nk in nks:
+            denominator = denominator*fac(nk)
+        rv = fac(n)/denominator
     else:
-        return v1
+        raise NotImplementedError
+    
+    return int(rv)
+    
 
+def Pnk_spam(*, byres=False, ofnum=None):
+    results = defaultdict(list)
+    for n in range(2, 11):
+        for n1 in range(1, 11):
+            if n1>n//2:
+                continue
+            n2=n-n1
+            rv = Pnk(n, n1, n2)
+            how = f"P({n}; {n1},{n2})"
+            if byres or (ofnum is not None):
+                results[rv].append(how)
+            else:
+                print(f"{how}: {rv}")
+        print()       
+        
+    if ofnum is not None:
+        print(f"{ofnum}:\t{', '.join(results[ofnum])}")
+    
+    elif byres:
+        for res, how in sorted(results.items()):
+            print(f"{res}:\t{', '.join(how)}")
+    
+        
+        
 
 def D(n, k, *, explain=True, example=False, identities=False):
     if isinstance(n, int):
@@ -227,6 +282,25 @@ def D(n, k, *, explain=True, example=False, identities=False):
         letters = ascii_uppercase[:k] + "|" * (n - 1)
         rv = C(letters, k, example=example)
     return rv
+
+
+def D_spam(*, byres=False, ofnum=None):
+    results = defaultdict(list)
+    for n in range(1, 11):
+        for k in range(1, 11):
+            rv = D(n,k,example=False,explain=False,identities=False)
+            if byres or (ofnum is not None):
+                results[rv].append(f"D({n},{k})")
+            else:
+                print(f"D({n},{k}): {rv}")
+    
+    if ofnum is not None:
+        print(f"{ofnum}:\t{', '.join(results[ofnum])}")
+    
+    elif byres:
+        for res, how in sorted(results.items()):
+            print(f"{res}:\t{', '.join(how)}")
+
 
 
 def C2D(n, k):
