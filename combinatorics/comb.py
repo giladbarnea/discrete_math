@@ -165,6 +165,7 @@ def Q(n, k, *, explain=True, example=False):
             print(
                 f"Q({n},{k})",
                 f"{rv} ways to organize {k} distinct objects into {n} bins",
+                f"{rv} = P({_Pn},{k})",
                 orderstr,
                 "• No repetitions allowed",
                 sep="\n\t",
@@ -335,6 +336,9 @@ def C_id(n, k, v)->str:
         
 
 def D(n, k, *, explain=True, example=False, identities=False):
+    """
+    k indist. objects into n dist. boxes
+    """
     if isinstance(n, int):
         _Cn1 = n - 1 + k
         rv = C(_Cn1, k, explain=False, example=False, identities=False)
