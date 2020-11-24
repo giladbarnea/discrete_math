@@ -302,8 +302,8 @@ def C(n, k, *, explain=True, example=False, identities=False):
 
 def C_spam(*, byres=False):
     results = defaultdict(list)
-    for n in range(1, 11):
-        for k in range(1, 11):
+    for n in range(1, 13):
+        for k in range(1, 13):
             if k > n:
                 continue
             rv = C(n,k,example=False,explain=False,identities=False)
@@ -408,12 +408,14 @@ def D_spam(*, byres=False, ofnum=None):
 
 
 
-def C2D(n, k):
+def C2D(n, k, *, explain=True, example=False, identities=True):
     """
     D(3,5) prints C(7,5) and C(7,2).
     C2D(7,2) prints D(6,2), D(6,5)
     """
-    D(n - k + 1, k, identities=True)
+    Dn = n - k + 1
+    rv= D(Dn, k, explain=explain, example=example, identities=identities)
+    print(f'C({n},{k}) = D({Dn},{k}) = {rv}')
     
     
     
